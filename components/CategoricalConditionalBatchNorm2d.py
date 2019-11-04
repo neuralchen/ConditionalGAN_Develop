@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+#############################################################
+# File: CategoricalConditionalBatchNorm2d.py
+# Created Date: Tuesday October 1st 2019
+# Author: Chen Xuanhong
+# Email: chenxuanhongzju@outlook.com
+# Last Modified:  Saturday, 5th October 2019 12:22:42 pm
+# Modified By: Chen Xuanhong
+# Copyright (c) 2019 Shanghai Jiao Tong University
+#############################################################
+
+
+
+
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.nn import init
+from components.ConditionalBatchNorm2d import ConditionalBatchNorm2d
+
+class CategoricalConditionalBatchNorm2d(ConditionalBatchNorm2d):
+
+    def __init__(self, num_classes, num_features, eps=1e-5, momentum=0.1,
+                 affine=False, track_running_stats=True):
+        super(CategoricalConditionalBatchNorm2d, self).__init__(
+            num_features, eps, momentum, affine, track_running_stats
+        )
+        self.weights = nn.Embedding(num_classes, num_features)
+        self.biases = nn.Embedding(num_classes, num_features)
+
+        self._initialize()
+
+    def _initialize(self):
+        init.ones_(self.weights.weight.data)
+        init.zeros_(self.biases.weight.data)
+
+    def forward(self, input, c, **kwargs):
+        weight = self.weights(c)
+        bias = self.biases(c)
+
+        return super(CategoricalConditionalBatchNorm2d, self).forward(input, weight, bias)
